@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin – Grillhütte</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: sans-serif; background: #1a1a2e; color: #eee; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+    .card { background: #16213e; border-radius: 16px; padding: 2rem; width: 100%; max-width: 480px; box-shadow: 0 8px 32px rgba(0,0,0,0.4); }
+    h1 { margin-bottom: 1.5rem; font-size: 1.4rem; color: #e94560; }
+    input[type=password], input[type=date] { width: 100%; padding: 0.75rem 1rem; border-radius: 8px; border: 1px solid #333; background: #0f3460; color: #eee; font-size: 1rem; margin-bottom: 1rem; }
+    button { width: 100%; padding: 0.75rem; border-radius: 8px; border: none; background: #e94560; color: #fff; font-size: 1rem; cursor: pointer; margin-bottom: 0.5rem; }
+    button.secondary { background: #0f3460; }
+    #msg { margin-top: 1rem; padding: 0.75rem; border-radius: 8px; display: none; }
+    #msg.ok { background: #1a472a; color: #6fcf97; display: block; }
+    #msg.err { background: #4a1a1a; color: #e94560; display: block; }
+    #liste { margin-top: 1.5rem; }
+    .tag { display: flex; justify-content: space-between; align-items: center; background: #0f3460; padding: 0.5rem 1rem; border-radius: 8px; margin-bottom: 0.5rem; }
+    .tag button { width: auto; padding: 0.25rem 0.75rem; margin: 0; background: #e94560; font-size: 0.85rem; }
+    #login-box, #admin-box { }
+    #admin-box { display: none; }
+  </style>
+</head>
+<body>
+<div class="card">
+  <!-- Login -->
+  <div id="login-box">
+    <h1>🔐 Admin Login</h1>
+    <input type="password" id="pw" placeholder="Passwort" />
+    <button onclick="login()">Einloggen</button>
+    <div id="msg-login" class="err" style="display:none">Falsches Passwort!</div>
+  </div>
+
+  <!-- Admin Panel -->
+  <div id="admin-box">
+    <h1>📅 Gesperrte Tage</h1>
+    <input type="date" id="datum" />
+    <button onclick="sperren()">➕ Tag sperren</button>
+    <div id="msg"></div>
+    <div id="liste"></div>
+  </div>
+</div>
+
+<script>
+  const ADMIN_PW = 'grillhuette2026'; // ← Passwort hier ändern!
+
+  function login() {
+    if (document.getElementById('pw').value === ADMIN_PW) {
+      document.getElementById('login-box').style.display = 'none';
+      document.getElementById('admin-box').style.display = 'block';
+      laden();
+    } else {
+      document.getElementById('msg-login').style.display = 'block';
+    }
+  }
+
+  async function laden() {
+    const res = await fetch('/api/blocked-dates');
+    const data = await res.json();
+    const liste = document.getElementById('liste');
+    liste.innerHTML = '';
+    if (data.dates.length === 0) {
+      liste.innerHTML = '<p style="color:#888">Keine gesperrten Tage.</p>';
+      return;
+    }
+    data.dates.sort().forEach(d => {
+      liste.innerHTML += `
+        <div class="tag">
+          <span>📅 ${d}</span>
+          <button onclick="freigeben('${d}')">✖ Freigeben</button>
+        </div>`;
+    });
+  }
+
+  async function sperren() {
+    const datum = document.getElementById('datum').value;
+    if (!datum) return zeigMsg('Bitte Datum auswählen!', false);
+    const res = await fetch('/api/blocked-dates', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ action: 'add', date: datum })
+    });
+    const data = await res.json();
+    zeigMsg(data.ok ? '✅ Tag gesperrt!' : '❌ Fehler!', data.ok);
+    if (data.ok) laden();
+  }
+
+  async function freigeben(datum) {
+    const res = await fetch('/api/blocked-dates', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ action: 'remove', date: datum })
+    });
+    const data = await res.json();
+    zeigMsg(data.ok ? '✅ Tag freigegeben!' : '❌ Fehler!', data.ok);
+    if (data.ok) laden();
+  }
+
+  function zeigMsg(text, ok) {
+    const el = document.getElementById('msg');
+    el.textContent = text;
+    el.className = ok ? 'ok' : 'err';
+    setTimeout(() => el.className = '', 3000);
+  }
+</script>
+</body>
+</html>
