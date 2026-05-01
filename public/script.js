@@ -68,7 +68,7 @@ document.addEventListener('keydown', e => {
   if (e.key==='ArrowRight') lbNav(1);
 });
 
-// ── Buchungsformular mit Formspree ────────────────────────────────
+// ── Buchungsformular ──────────────────────────────────────────────
 const bookingForm = document.getElementById('bookingForm');
 const formStatus  = document.getElementById('formStatus');
 bookingForm.addEventListener('submit', async e => {
@@ -85,8 +85,25 @@ bookingForm.addEventListener('submit', async e => {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Fehler beim Senden');
+
+    // WhatsApp Text vorbereiten
+    const waText = `Hallo! Ich habe gerade eine Buchungsanfrage über die Website geschickt.
+
+👤 Name: ${bookingForm.querySelector('[name=name]').value}
+📅 Datum: ${bookingForm.querySelector('[name=date]').value}
+👥 Personen: ${bookingForm.querySelector('[name=guests]').value}
+🎉 Anlass: ${bookingForm.querySelector('[name=occasion]').value}
+📞 Telefon: ${bookingForm.querySelector('[name=phone]').value}`;
+
+    const waUrl = `https://wa.me/4915560562116?text=${encodeURIComponent(waText)}`;
+
     formStatus.style.color = '#4ade80';
-    formStatus.textContent = '✅ Perfekt! Anfrage eingegangen. Wir melden uns bald!';
+    formStatus.innerHTML = `
+      ✅ Anfrage eingegangen! Wir melden uns bald.<br><br>
+      <a href="${waUrl}" target="_blank" style="display:inline-flex;align-items:center;gap:8px;padding:12px 20px;background:#25D366;color:#fff;border-radius:14px;font-weight:700;text-decoration:none">
+        💬 Zusätzlich per WhatsApp bestätigen
+      </a>`;
+
     bookingForm.reset();
   } catch(err) {
     formStatus.style.color = '#ff7a18';
@@ -96,6 +113,7 @@ bookingForm.addEventListener('submit', async e => {
   }
 });
 
+// ── Gästebuch ─────────────────────────────────────────────────────
 let currentRating = 5;
 const stars = document.querySelectorAll('#starRating span');
 stars.forEach(star => {
