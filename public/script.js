@@ -78,7 +78,7 @@ bookingForm.addEventListener('submit', async e => {
   formStatus.style.color = '#9dbdac';
   formStatus.textContent = 'Deine Anfrage wird übermittelt...';
   try {
-    const res = await fetch('https://formspree.io/f/xnjwnppe', {
+    const res = await fetch('https://formspree.io/f/xlgzdjwd', {
       method: 'POST',
       body: new FormData(bookingForm),
       headers: { 'Accept': 'application/json' }
