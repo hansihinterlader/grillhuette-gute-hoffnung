@@ -68,17 +68,23 @@ document.addEventListener('keydown', e => {
   if (e.key==='ArrowRight') lbNav(1);
 });
 
+// ── Buchungsformular mit Formspree ────────────────────────────────
 const bookingForm = document.getElementById('bookingForm');
 const formStatus  = document.getElementById('formStatus');
 bookingForm.addEventListener('submit', async e => {
   e.preventDefault();
   const btn = bookingForm.querySelector('button[type=submit]');
   btn.disabled = true; btn.textContent = 'Wird gesendet...';
-  formStatus.style.color = '#9dbdac'; formStatus.textContent = 'Deine Anfrage wird übermittelt...';
+  formStatus.style.color = '#9dbdac';
+  formStatus.textContent = 'Deine Anfrage wird übermittelt...';
   try {
-    const res = await fetch('/api/booking', { method: 'POST', body: new FormData(bookingForm) });
+    const res = await fetch('https://formspree.io/f/xnjwnppe', {
+      method: 'POST',
+      body: new FormData(bookingForm),
+      headers: { 'Accept': 'application/json' }
+    });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Fehler');
+    if (!res.ok) throw new Error(data.error || 'Fehler beim Senden');
     formStatus.style.color = '#4ade80';
     formStatus.textContent = '✅ Perfekt! Anfrage eingegangen. Wir melden uns bald!';
     bookingForm.reset();
