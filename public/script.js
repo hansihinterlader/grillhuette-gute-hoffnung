@@ -74,6 +74,21 @@ const formStatus  = document.getElementById('formStatus');
 bookingForm.addEventListener('submit', async e => {
   e.preventDefault();
   const btn = bookingForm.querySelector('button[type=submit]');
+
+  // Gesperrte Tage prüfen
+  const datumWert = bookingForm.querySelector('[name=date]').value;
+  try {
+    const bdRes = await fetch('/api/blocked-dates');
+    const bdData = await bdRes.json();
+    if (bdData.dates.includes(datumWert)) {
+      formStatus.style.color = '#e94560';
+      formStatus.textContent = '❌ Dieser Tag ist leider bereits belegt! Bitte wähle ein anderes Datum.';
+      return;
+    }
+  } catch(err) {
+    // KV nicht erreichbar – trotzdem weitermachen
+  }
+
   btn.disabled = true; btn.textContent = 'Wird gesendet...';
   formStatus.style.color = '#9dbdac';
   formStatus.textContent = 'Deine Anfrage wird übermittelt...';
@@ -86,7 +101,6 @@ bookingForm.addEventListener('submit', async e => {
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Fehler beim Senden');
 
-    // WhatsApp Text vorbereiten
     const waText = `Hallo! Ich habe gerade eine Buchungsanfrage über die Website geschickt.
 
 👤 Name: ${bookingForm.querySelector('[name=name]').value}
